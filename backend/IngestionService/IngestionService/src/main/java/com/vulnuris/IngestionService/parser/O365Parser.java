@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 @Component
@@ -21,6 +22,9 @@ public class O365Parser implements LogParser {
     public Stream<CesEvent> parseStream(InputStream input, String filename) {
 
         try {
+
+            AtomicLong offsetCounter = new AtomicLong(0);
+
             List<Map<String, Object>> logs =
                     mapper.readValue(input, new TypeReference<>() {});
 
@@ -29,7 +33,7 @@ public class O365Parser implements LogParser {
             }
 
             return logs.stream()
-                    .map(log -> convert(log, filename))
+                    .map(log -> convert(log, filename, offsetCounter.getAndIncrement()))
                     .filter(Objects::nonNull);
 
         } catch (Exception e) {
@@ -37,7 +41,7 @@ public class O365Parser implements LogParser {
         }
     }
 
-    private CesEvent convert(Map<String, Object> log, String file) {
+    private CesEvent convert(Map<String, Object> log, String file, long offset) {
 
         if (log == null) return null;
 
@@ -95,7 +99,7 @@ public class O365Parser implements LogParser {
 
                     .rawRef(RawRef.builder()
                             .file(file)
-                            .offset(0L)
+                            .offset(offset)
                             .build())
 
                     .build();

@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 @Component
@@ -25,6 +26,9 @@ public class PaloAltoFirewallParser implements LogParser {
     public Stream<CesEvent> parseStream(InputStream input, String filename) {
 
         try {
+
+            AtomicLong offsetCounter = new AtomicLong(0);
+
             List<Map<String, Object>> logs =
                     mapper.readValue(input, new TypeReference<>() {});
 
@@ -33,7 +37,7 @@ public class PaloAltoFirewallParser implements LogParser {
             }
 
             return logs.stream()
-                    .map(log -> convert(log, filename))
+                    .map(log -> convert(log, filename, offsetCounter.getAndIncrement()))
                     .filter(Objects::nonNull);
 
         } catch (Exception e) {
@@ -41,7 +45,7 @@ public class PaloAltoFirewallParser implements LogParser {
         }
     }
 
-    private CesEvent convert(Map<String, Object> log, String file) {
+    private CesEvent convert(Map<String, Object> log, String file, long offset) {
 
         if (log == null) return null;
 
@@ -103,7 +107,7 @@ public class PaloAltoFirewallParser implements LogParser {
 
                     .rawRef(RawRef.builder()
                             .file(file)
-                            .offset(0L)
+                            .offset(offset)
                             .build())
 
                     .build();

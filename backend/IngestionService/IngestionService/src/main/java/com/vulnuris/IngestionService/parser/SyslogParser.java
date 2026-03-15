@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -17,7 +18,6 @@ import java.util.stream.Stream;
 @Component
 public class SyslogParser implements LogParser {
 
-    // RFC 5424 Pattern
     private static final Pattern SYSLOG_PATTERN = Pattern.compile(
             "^<(?<pri>\\d+)>\\d+\\s+" +
                     "(?<ts>\\S+)\\s+" +
@@ -30,9 +30,6 @@ public class SyslogParser implements LogParser {
     private static final Pattern IP_PATTERN =
             Pattern.compile("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b");
 
-//    private static final Pattern USER_PATTERN =
-//            Pattern.compile("user\\s+(\\w+)");
-
     private static final Pattern USER_PATTERN =
             Pattern.compile("for\\s+(?:invalid user\\s+)?(\\w+)");
 
@@ -44,12 +41,14 @@ public class SyslogParser implements LogParser {
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(input));
 
+        AtomicLong offsetCounter = new AtomicLong(0);
+
         return reader.lines()
-                .map(line -> parseLine(line, filename))
+                .map(line -> parseLine(line, filename, offsetCounter.getAndIncrement()))
                 .filter(Objects::nonNull);
     }
 
-    private CesEvent parseLine(String line, String file) {
+    private CesEvent parseLine(String line, String file, long offset) {
 
         if (line == null || line.isBlank()) return null;
 
@@ -57,7 +56,7 @@ public class SyslogParser implements LogParser {
 
             Matcher m = SYSLOG_PATTERN.matcher(line);
 
-            if (!m.find()) return null; // skip malformed logs
+            if (!m.find()) return null;
 
             String ts = m.group("ts");
             String host = m.group("host");
@@ -66,23 +65,17 @@ public class SyslogParser implements LogParser {
 
             Instant tsUtc = Instant.parse(ts);
 
-            // -------- Extract fields --------
             String srcIp = extractIp(msg);
             String user = extractUser(msg);
             Integer srcPort = extractPort(msg);
             String protocol = extractProtocol(msg);
 
-            // Server is destination
             String dstIp = host;
             Integer dstPort = detectServicePort(protocol);
 
-            // -------- Action --------
             String action = detectAction(msg);
-
-            // -------- Result --------
             ResultType result = detectResult(msg);
 
-            // -------- IOCs --------
             List<String> ips = new ArrayList<>();
             if (srcIp != null) ips.add(srcIp);
 
@@ -124,7 +117,7 @@ public class SyslogParser implements LogParser {
 
                     .rawRef(RawRef.builder()
                             .file(file)
-                            .offset(0L)
+                            .offset(offset)
                             .build())
 
                     .build();
@@ -134,22 +127,16 @@ public class SyslogParser implements LogParser {
         }
     }
 
-    // -------- helper methods --------
+    // helper methods unchanged
 
     private String extractIp(String msg) {
         Matcher ipm = IP_PATTERN.matcher(msg);
         return ipm.find() ? ipm.group() : null;
     }
 
-//    private String extractUser(String msg) {
-//        Matcher um = USER_PATTERN.matcher(msg);
-//        return um.find() ? um.group(1) : null;
-//    }
-
     private String extractUser(String msg) {
 
-        if (msg == null)
-            return null;
+        if (msg == null) return null;
 
         Matcher um = USER_PATTERN.matcher(msg);
 
@@ -160,9 +147,9 @@ public class SyslogParser implements LogParser {
         return null;
     }
 
-
     private Integer extractPort(String msg) {
         Matcher pm = PORT_PATTERN.matcher(msg);
+
         if (pm.find()) {
             try {
                 return Integer.parseInt(pm.group(1));
@@ -170,6 +157,7 @@ public class SyslogParser implements LogParser {
                 return null;
             }
         }
+
         return null;
     }
 

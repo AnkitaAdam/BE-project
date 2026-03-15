@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 @Component
@@ -23,11 +24,14 @@ public class CloudTrailParser implements LogParser {
     public Stream<CesEvent> parseStream(InputStream input, String filename) {
 
         try {
+
+            AtomicLong offsetCounter = new AtomicLong(0);
+
             Map<String, Object> root = mapper.readValue(input, Map.class);
 
             List<Map<String, Object>> records = new ArrayList<>();
 
-            // ✅ Handle AWS CloudTrail wrapped format
+            //  Handle AWS CloudTrail wrapped format
             if (root.containsKey("Records")) {
                 Object recObj = root.get("Records");
 
@@ -35,13 +39,13 @@ public class CloudTrailParser implements LogParser {
                     records = (List<Map<String, Object>>) recObj;
                 }
             } else {
-                // ✅ Handle single log or direct JSON
+                //  Handle single log or direct JSON
                 records.add(root);
             }
 
             return records.stream()
                     .filter(Objects::nonNull)
-                    .map(record -> safeConvert(record, filename))
+                    .map(record -> convert(record, filename, offsetCounter.getAndIncrement()))
                     .filter(Objects::nonNull);
 
         } catch (Exception e) {
@@ -50,14 +54,14 @@ public class CloudTrailParser implements LogParser {
         }
     }
 
-    private CesEvent safeConvert(Map<String, Object> log, String file) {
+    private CesEvent convert(Map<String, Object> log, String file, long offset) {
 
         try {
             if (log == null || log.isEmpty()) {
                 return null;
             }
 
-            // ✅ Safe eventTime extraction
+            // Safe eventTime extraction
             String eventTime = getString(log, "eventTime");
             Instant tsUtc = null;
 
@@ -67,7 +71,7 @@ public class CloudTrailParser implements LogParser {
                 tsUtc = Instant.now(); // fallback
             }
 
-            // ✅ Safe nested userIdentity
+            //  Safe nested userIdentity
             Map<String, Object> userIdentity =
                     getMap(log, "userIdentity");
 
@@ -76,14 +80,14 @@ public class CloudTrailParser implements LogParser {
                 user = getString(userIdentity, "userName");
             }
 
-            // ✅ Safe IP extraction
+            // Safe IP extraction
             String srcIp = getString(log, "sourceIPAddress");
 
-            // ✅ Safe action and object
+            // Safe action and object
             String action = getString(log, "eventName");
             String object = getString(log, "eventSource");
 
-            // ✅ Safe IOC list
+            // Safe IOC list
             List<String> ips = new ArrayList<>();
             if (srcIp != null && !srcIp.isBlank()) {
                 ips.add(srcIp);
@@ -115,7 +119,7 @@ public class CloudTrailParser implements LogParser {
 
                     .rawRef(RawRef.builder()
                             .file(file)
-                            .offset(0L)
+                            .offset(offset)
                             .build())
 
                     .message("AWS CloudTrail event")
@@ -128,7 +132,7 @@ public class CloudTrailParser implements LogParser {
         }
     }
 
-    // 🔥 Utility methods for null safety
+    //  Utility methods for null safety
 
     private String getString(Map<String, Object> map, String key) {
         if (map == null || key == null) return null;
