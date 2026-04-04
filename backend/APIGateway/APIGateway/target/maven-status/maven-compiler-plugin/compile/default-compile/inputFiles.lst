@@ -1,0 +1,9 @@
+C:\Users\nehul\Dev\BE project\BE-project\backend\APIGateway\APIGateway\src\main\java\com\vulnuris\apigateway\APIGatewayApplication.java
+C:\Users\nehul\Dev\BE project\BE-project\backend\APIGateway\APIGateway\src\main\java\com\vulnuris\apigateway\config\GatewaySecurityConfig.java
+C:\Users\nehul\Dev\BE project\BE-project\backend\APIGateway\APIGateway\src\main\java\com\vulnuris\apigateway\dto\GatewayErrorResponse.java
+C:\Users\nehul\Dev\BE project\BE-project\backend\APIGateway\APIGateway\src\main\java\com\vulnuris\apigateway\filter\JwtAuthenticationGlobalFilter.java
+C:\Users\nehul\Dev\BE project\BE-project\backend\APIGateway\APIGateway\src\main\java\com\vulnuris\apigateway\filter\TraceIdGlobalFilter.java
+C:\Users\nehul\Dev\BE project\BE-project\backend\APIGateway\APIGateway\src\main\java\com\vulnuris\apigateway\security\GatewayAuthenticationException.java
+C:\Users\nehul\Dev\BE project\BE-project\backend\APIGateway\APIGateway\src\main\java\com\vulnuris\apigateway\security\GatewayJwtProperties.java
+C:\Users\nehul\Dev\BE project\BE-project\backend\APIGateway\APIGateway\src\main\java\com\vulnuris\apigateway\security\JwtTokenValidator.java
+C:\Users\nehul\Dev\BE project\BE-project\backend\APIGateway\APIGateway\src\main\java\com\vulnuris\apigateway\security\RouteRolePolicy.java

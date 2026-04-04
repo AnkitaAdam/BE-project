@@ -1,0 +1,294 @@
+{
+  "info": {
+    "_postman_id": "5c8f9d1a-3f15-43cf-9cd6-55a7093f8d0b",
+    "name": "Vulnuris Auth + API Gateway Demo",
+    "description": "Demo collection for AuthService behind APIGateway. Includes token capture and RBAC/security checks.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Gateway Health",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/actuator/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "actuator",
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. Register Viewer",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 201', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "var json = {};",
+              "try { json = pm.response.json(); } catch (e) {}",
+              "if (json.accessToken) pm.collectionVariables.set('accessToken', json.accessToken);",
+              "if (json.refreshToken) pm.collectionVariables.set('refreshToken', json.refreshToken);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = {};",
+              "try { json = pm.response.json(); } catch (e) {}",
+              "if (json.accessToken) pm.collectionVariables.set('accessToken', json.accessToken);",
+              "if (json.refreshToken) pm.collectionVariables.set('refreshToken', json.refreshToken);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. Me (Authorized)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "me"
+          ]
+        }
+      }
+    },
+    {
+      "name": "5. Refresh",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = {};",
+              "try { json = pm.response.json(); } catch (e) {}",
+              "if (json.accessToken) pm.collectionVariables.set('accessToken', json.accessToken);",
+              "if (json.refreshToken) pm.collectionVariables.set('refreshToken', json.refreshToken);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/refresh",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "refresh"
+          ]
+        }
+      }
+    },
+    {
+      "name": "6. Me (No Token -> 401)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "me"
+          ]
+        }
+      }
+    },
+    {
+      "name": "7. Events Write (Viewer Token -> 403)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"note\": \"RBAC check from gateway\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/events/demo",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "events",
+            "demo"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "traceId",
+      "value": "stakeholder-demo-001"
+    },
+    {
+      "key": "username",
+      "value": "demo.viewer"
+    },
+    {
+      "key": "email",
+      "value": "demo.viewer@example.com"
+    },
+    {
+      "key": "password",
+      "value": "VeryStrongPass123!"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    }
+  ]
+}

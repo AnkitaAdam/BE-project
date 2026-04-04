@@ -1,0 +1,62 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: api-gateway
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: auth-service
+              uri: ${AUTH_SERVICE_URI:http://localhost:8091}
+              predicates:
+                - Path=/api/auth/**
+
+            - id: event-service
+              uri: ${EVENT_SERVICE_URI:http://localhost:8092}
+              predicates:
+                - Path=/api/events/**
+
+            - id: ingestion-service
+              uri: ${INGESTION_SERVICE_URI:http://localhost:8081}
+              predicates:
+                - Path=/api/ingest/**
+              filters:
+                - RewritePath=/api/ingest/?(?<segment>.*), /logs/$\{segment}
+
+            - id: correlation-service
+              uri: ${CORRELATION_SERVICE_URI:http://localhost:8093}
+              predicates:
+                - Path=/api/correlation/**
+
+            - id: report-service
+              uri: ${REPORT_SERVICE_URI:http://localhost:8094}
+              predicates:
+                - Path=/api/report/**
+
+gateway:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:tRlQIxPxVydGh6gR3kVFcsW3YHczi8BIcakqkPUcgOP}
+      issuer: ${JWT_ISSUER:vulnuris-auth-service}
+  cors:
+    allowed-origins: ${GATEWAY_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  pattern:
+    level: "%5p [traceId:%X{traceId}]"
