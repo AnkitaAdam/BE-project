@@ -1,21 +1,27 @@
 package com.vulnuris.authservice.controller;
 
-import com.vulnuris.authservice.dto.request.LoginRequest;
-import com.vulnuris.authservice.dto.request.RefreshTokenRequest;
-import com.vulnuris.authservice.dto.request.RegisterRequest;
-import com.vulnuris.authservice.dto.response.AuthTokensResponse;
-import com.vulnuris.authservice.dto.response.UserResponse;
-import com.vulnuris.authservice.service.AuthService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.vulnuris.authservice.dto.request.LoginRequest;
+import com.vulnuris.authservice.dto.request.RefreshTokenRequest;
+import com.vulnuris.authservice.dto.request.RegisterRequest;
+import com.vulnuris.authservice.dto.request.UpdateUserRolesRequest;
+import com.vulnuris.authservice.dto.response.AuthTokensResponse;
+import com.vulnuris.authservice.dto.response.UserResponse;
+import com.vulnuris.authservice.service.AuthService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -43,5 +49,14 @@ public class AuthController {
     @GetMapping("/me")
     public UserResponse me(Authentication authentication) {
         return authService.me(authentication.getName());
+    }
+
+    @PatchMapping("/admin/users/{userId}/roles")
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserResponse updateUserRoles(
+            @PathVariable Long userId,
+            @Valid @RequestBody UpdateUserRolesRequest request
+    ) {
+        return authService.updateUserRoles(userId, request.roles());
     }
 }

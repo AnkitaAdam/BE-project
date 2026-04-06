@@ -33,7 +33,7 @@ security:
   cors:
     allowed-origins: ${AUTH_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
   bootstrap-admin:
-    enabled: ${AUTH_BOOTSTRAP_ADMIN_ENABLED:false}
+    enabled: ${AUTH_BOOTSTRAP_ADMIN_ENABLED:true}
     username: ${AUTH_BOOTSTRAP_ADMIN_USERNAME:admin}
     email: ${AUTH_BOOTSTRAP_ADMIN_EMAIL:admin@vulnuris.local}
     password: ${AUTH_BOOTSTRAP_ADMIN_PASSWORD:ChangeThisAdminPassword123!}

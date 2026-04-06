@@ -1,5 +1,7 @@
 package com.vulnuris.authservice.service;
 
+import java.util.Set;
+
 import com.vulnuris.authservice.dto.request.LoginRequest;
 import com.vulnuris.authservice.dto.request.RefreshTokenRequest;
 import com.vulnuris.authservice.dto.request.RegisterRequest;
@@ -15,4 +17,6 @@ public interface AuthService {
     AuthTokensResponse refresh(RefreshTokenRequest request);
 
     UserResponse me(String username);
+
+    UserResponse updateUserRoles(Long userId, Set<String> roles);
 }

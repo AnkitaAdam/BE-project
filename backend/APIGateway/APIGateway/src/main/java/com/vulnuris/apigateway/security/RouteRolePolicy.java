@@ -1,6 +1,7 @@
 package com.vulnuris.apigateway.security;
 
 import java.util.Set;
+
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
@@ -9,6 +10,7 @@ public class RouteRolePolicy {
 
     private static final Set<String> ALL_ROLES = Set.of("ADMIN", "ANALYST", "VIEWER");
     private static final Set<String> ANALYST_OR_ADMIN = Set.of("ADMIN", "ANALYST");
+    private static final Set<String> ADMIN_ONLY = Set.of("ADMIN");
 
     public boolean isPublicEndpoint(String path, HttpMethod method) {
         if (HttpMethod.OPTIONS.equals(method)) {
@@ -39,6 +41,10 @@ public class RouteRolePolicy {
 
     private Set<String> requiredRoles(String path, HttpMethod method) {
         String normalizedPath = normalizePath(path);
+
+        if (normalizedPath.startsWith("/api/auth/admin")) {
+            return ADMIN_ONLY;
+        }
 
         if (normalizedPath.startsWith("/api/auth")) {
             return ALL_ROLES;
